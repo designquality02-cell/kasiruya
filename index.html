@@ -3,141 +3,382 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Shaf POS Firebase</title>
-
+<title>POS Kasir Premium Lengkap</title>
 <style>
-body{
-margin:0;
-font-family:Arial;
-background:linear-gradient(135deg,#6a5af9,#8ec5ff);
-color:white;
-}
+:root{--p:#7c6cff;--s:#8ec5ff;--bg:#f7f8ff}
+*{box-sizing:border-box;font-family:Segoe UI,sans-serif}
+body{margin:0;background:var(--bg);display:flex;min-height:100vh}
+.sidebar{width:230px;background:#fff;padding:20px}
+.logo{font-size:24px;font-weight:700;color:var(--p);margin-bottom:20px}
+button{cursor:pointer}
+.menu button,.action{width:100%;padding:12px;border:none;border-radius:12px;margin-bottom:8px}
+.menu button,.card{background:#fff}
+.action{background:linear-gradient(135deg,var(--p),var(--s));color:#fff}
+.content{flex:1;padding:20px}
+.page{display:none}.active{display:block}
+input,select{width:100%;padding:12px;margin:6px 0;border:1px solid #ddd;border-radius:10px}
+table{width:100%;border-collapse:collapse;background:#fff}
+th,td{padding:10px;border-bottom:1px solid #eee}
+img{border-radius:10px}
+.banner{padding:20px;border-radius:20px;background:linear-gradient(135deg,var(--p),var(--s));color:#fff}
+.preview{background:#fff;padding:12px;border-radius:12px;margin:10px 0}
 
-/* LANDING */
-#landing{
-height:100vh;
-display:flex;
-justify-content:center;
-align-items:center;
-flex-direction:column;
-text-align:center;
-}
-
-.card{
-background:white;
-color:black;
-padding:30px;
-border-radius:20px;
-width:320px;
-box-shadow:0 10px 30px rgba(0,0,0,0.2);
-}
-
-button{
-padding:12px 20px;
-border:none;
-border-radius:10px;
-cursor:pointer;
-background:#6a5af9;
-color:white;
-font-size:16px;
-width:100%;
-}
-
-/* APP */
-#app{
-display:none;
-background:#f4f6ff;
-color:black;
-min-height:100vh;
-}
-
-.sidebar{
-width:220px;
-background:white;
-height:100vh;
-position:fixed;
-padding:15px;
-}
-
-.content{
-margin-left:230px;
-padding:15px;
-}
-
-.product{
-background:white;
-padding:10px;
-border-radius:10px;
-margin:10px;
-}
-img{width:100%;border-radius:10px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.kasir-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-top:10px}
+.kasir-card{background:#fff;padding:10px;border-radius:12px;cursor:pointer;text-align:center;border:1px solid #eee}
+.kasir-card img{width:100%;height:120px;object-fit:cover}
 
 </style>
 </head>
-
 <body>
-
-<!-- LANDING PAGE -->
-<div id="landing">
-<h1>Shaf POS System</h1>
-<p>Kelola produk, kasir, dan laporan secara online</p>
-
-<div class="card">
-<h3>Login ke Sistem</h3>
-<button onclick="loginGoogle()">Login dengan Google</button>
-</div>
-</div>
-
-<!-- APP -->
-<div id="app">
-
 <div class="sidebar">
-<h3>Dashboard POS</h3>
-<button onclick="logout()">Logout</button>
+<div class="logo">POS Kasir</div>
+<div class="menu">
+<div id="firebaseLoginPanel" style="background:#fff;padding:10px;border-radius:12px;margin-bottom:10px;border:1px solid #ddd">
+  <div id="loginStatus" style="font-size:12px;margin-bottom:8px">Belum Login</div>
+  <button onclick="loginGoogle()" style="width:100%;padding:10px;background:#4285F4;color:#fff;border:none;border-radius:8px;margin-bottom:6px">
+    Login Google
+  </button>
+  <button onclick="logoutGoogle()" style="width:100%;padding:10px;background:#e53935;color:#fff;border:none;border-radius:8px">
+    Logout
+  </button>
+</div>
+
+<div style="padding:10px">
+<button onclick="loginGoogle()" class="action">Login Google</button>
+<button onclick="logoutGoogle()" class="action">Logout</button>
+</div>
+
+<button onclick="showPage('dashboard')">Dashboard</button>
+<button onclick="showPage('produk')">Produk</button>
+<button onclick="showPage('kasir')">Kasir</button>
+<button onclick="showPage('transaksi')">Transaksi Kasir</button>
+<button onclick="showPage('keuangan')">Keuangan</button>
+<button onclick="backupData()">Backup JSON</button>
+<input type="file" id="restoreFile" accept=".json">
+<button onclick="restoreData()">Restore JSON</button>
+<hr style="margin:15px 0">
+<button style="background:#ff4d4f;color:white;width:100%;padding:12px;border:none;border-radius:12px" onclick="resetSemuaData()">Reset Semua Data</button>
+
+</div>
 </div>
 
 <div class="content">
+<div id="dashboard" class="page active">
+<div class="banner">
+<h2>Dashboard</h2>
+<p>Total Produk: <span id="totalProduk">0</span></p>
+<p>Total Penjualan: <span id="totalPenjualan">Rp 0</span></p>
+</div>
+</div>
 
+<div id="produk" class="page">
 <h2>Tambah Produk</h2>
+<input id="namaProduk" placeholder="Nama Produk">
+<input id="hargaProduk" type="text" placeholder="Harga (contoh 10.000)">
+<input id="stokProduk" type="number" placeholder="Stok">
+<input id="fotoProduk" type="file" accept="image/*">
+<h3>Topping</h3>
+<input id="namaTopping" placeholder="Nama Topping">
+<input id="hargaTopping" type="number" placeholder="Harga Topping">
+<button class="action" onclick="tambahTopping()">Tambah Topping</button>
+<div id="listTopping"></div><br>
+<button class="action" onclick="tambahProduk()">Simpan Produk</button>
 
-<input id="nama" placeholder="Nama"><br><br>
-<input id="harga" placeholder="Harga"><br><br>
-<input id="foto" type="file"><br><br>
+<table>
+<thead><tr><th>Foto</th><th>Nama</th><th>Harga</th><th>Stok</th><th>Aksi</th></tr></thead>
+<tbody id="produkList"></tbody>
+</table>
+</div>
 
-<button onclick="tambahProduk()">Simpan</button>
+<div id="kasir" class="page">
+<h2>Kasir</h2>
+<div id="kasirProdukList" class="kasir-grid"></div>
+<div id="previewProduk"></div>
+<input id="qty" type="number" value="1" onchange="hitungTotalKasir()" onkeyup="hitungTotalKasir()">
+<select id="metodeBayar">
+<option>Tunai</option>
+<option>QRIS</option>
+</select>
+<div id="opsiTopping"></div>
+<div class="banner" style="margin:10px 0">
+<h3>Total Pembelian</h3>
+<p id="grandTotal">Rp 0</p>
+</div>
 
-<hr>
+<button class="action" onclick="tambahKeKeranjang()">Tambah Ke Keranjang</button>
+<div id="keranjangList" class="preview"></div>
+<button class="action" onclick="jualProduk()">Simpan Transaksi</button>
 
-<div class="grid" id="list"></div>
+</div>
 
+<div id="transaksi" class="page">
+<h2>Transaksi</h2>
+<p>Menu transaksi digunakan untuk pencatatan transaksi melalui menu Kasir. Riwayat transaksi dan filter laporan telah dipindahkan ke menu Keuangan.</p>
+</div>
+
+<div id="keuangan" class="page">
+<h2>Keuangan & Laporan Bulanan</h2>
+<div class="banner" style="margin-bottom:15px">
+<b>Laporan Bulanan</b><br>
+Pilih bulan dan tahun untuk melihat pemasukan Tunai, pemasukan QRIS, pengeluaran Tunai, pengeluaran QRIS, dan laba bersih per periode.
+</div>
+
+<h3>Filter Laporan</h3>
+<select id="filterBulan" onchange="render()">
+<option value="">Semua Bulan</option>
+<option value="0">Jan</option><option value="1">Feb</option><option value="2">Mar</option>
+<option value="3">Apr</option><option value="4">Mei</option><option value="5">Jun</option>
+<option value="6">Jul</option><option value="7">Agu</option><option value="8">Sep</option>
+<option value="9">Okt</option><option value="10">Nov</option><option value="11">Des</option>
+</select>
+<input id="filterTahun" placeholder="Tahun (2026)" onchange="render()">
+
+<input id="ketPengeluaran" placeholder="Keterangan Pengeluaran">
+<input id="nilaiPengeluaran" type="number" placeholder="Nominal">
+<select id="metodePengeluaran"><option>TUNAI</option><option>QRIS</option></select>
+<button class="action" onclick="tambahPengeluaran()">Tambah Pengeluaran</button>
+
+<table>
+<thead>
+<tr>
+<th>Pemasukan Tunai</th>
+<th>Pemasukan QRIS</th>
+<th>Total Pemasukan</th>
+<th>Pengeluaran Tunai</th><th>Pengeluaran QRIS</th><th>Total Pengeluaran</th>
+<th>Laba Bersih</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td id="totalTunai">Rp 0</td>
+<td id="totalQris">Rp 0</td>
+<td id="totalMasuk">Rp 0</td>
+<td id="totalKeluarTunai">Rp 0</td><td id="totalKeluarQris">Rp 0</td><td id="totalKeluar">Rp 0</td>
+<td id="labaBersih">Rp 0</td>
+</tr>
+</tbody>
+</table>
+
+<table>
+<thead><tr><th>Tanggal</th><th>Keterangan</th><th>Metode</th><th>Nominal</th></tr></thead>
+<tbody id="pengeluaranList"></tbody>
+</table>
+
+<h3>Riwayat Transaksi</h3>
+<select id="filterMetode" onchange="render()">
+<option value="Semua">Semua Metode</option>
+<option value="Tunai">Tunai</option>
+<option value="QRIS">QRIS</option>
+</select>
+
+<table>
+<thead><tr><th>Tanggal</th><th>Produk</th><th>Topping</th><th>Metode</th><th>Total</th></tr></thead>
+<tbody id="transaksiList"></tbody>
+</table>
 </div>
 </div>
 
-<!-- FIREBASE -->
+<script>
+let produk=JSON.parse(localStorage.getItem('produk'))||[];
+
+function formatRupiahInput(el){
+ let angka = el.value.replace(/\D/g,'');
+ el.value = angka ? Number(angka).toLocaleString('id-ID') : '';
+}
+document.addEventListener('input',function(e){
+ if(['hargaProduk','hargaTopping','nilaiPengeluaran'].includes(e.target.id)){
+   formatRupiahInput(e.target);
+ }
+});
+
+let transaksi=JSON.parse(localStorage.getItem('transaksi'))||[];
+let pengeluaran=JSON.parse(localStorage.getItem('pengeluaran'))||[];
+let toppingTemp=[];
+let keranjang=[];
+
+function tanggalIndonesia(){
+ const d=new Date();
+ return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');
+}
+
+
+function showPage(id){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function simpan(){localStorage.setItem('produk',JSON.stringify(produk));localStorage.setItem('transaksi',JSON.stringify(transaksi));localStorage.setItem('pengeluaran',JSON.stringify(pengeluaran));
+document.addEventListener('input',function(e){
+ if(e.target.id==='hargaProduk' || e.target.id==='hargaTopping' || e.target.id==='nilaiPengeluaran'){
+   let n=e.target.value.replace(/\D/g,'');
+   e.target.value=n ? Number(n).toLocaleString('id-ID') : '';
+ }
+});
+
+render();}
+function tambahTopping(){if(!namaTopping.value)return;toppingTemp.push({nama:namaTopping.value,harga:Number(hargaTopping.value.replace(/\D/g,''))});listTopping.innerHTML=toppingTemp.map(t=>'• '+t.nama+' Rp '+t.harga).join('<br>');namaTopping.value='';hargaTopping.value='';}
+function tambahProduk(){
+const nama=namaProduk.value;if(!nama)return;
+const file=fotoProduk.files[0];
+if(file){
+const r=new FileReader();
+r.onload=e=>{produk.push({nama,harga:Number(hargaProduk.value.replace(/\D/g,'')),stok:Number(stokProduk.value),foto:e.target.result,topping:[...toppingTemp]});resetForm();simpan();};
+r.readAsDataURL(file);
+}else{produk.push({nama,harga:Number(hargaProduk.value.replace(/\D/g,'')),stok:Number(stokProduk.value),foto:'',topping:[...toppingTemp]});resetForm();simpan();}
+}
+function resetForm(){namaProduk.value='';hargaProduk.value='';stokProduk.value='';fotoProduk.value='';toppingTemp=[];listTopping.innerHTML='';}
+function hapusProduk(i){produk.splice(i,1);simpan();}
+
+function pilihProdukKasir(i){
+window.selectedProdukIndex=i;
+tampilkanTopping();
+}
+
+function hitungTotalKasir(){
+let p=produk[window.selectedProdukIndex||0]; if(!p){grandTotal.innerHTML='Rp 0';return;}
+let q=Number(qty.value)||1,tambahan=0;
+document.querySelectorAll('.top').forEach(c=>{if(c.checked){tambahan+=p.topping[c.value].harga;}});
+let total=(p.harga+tambahan)*q;
+if(document.getElementById('grandTotal')) grandTotal.innerHTML='Rp '+total.toLocaleString('id-ID');
+}
+function tampilkanTopping(){
+let p=produk[window.selectedProdukIndex||0]; if(!p)return;
+previewProduk.innerHTML=`<div class="preview">${p.foto?'<img src="'+p.foto+'" width="120"><br>':''}<b>${p.nama}</b><br>Rp ${p.harga.toLocaleString('id-ID')}</div>`;
+opsiTopping.innerHTML=(p.topping||[]).map((t,i)=>`<label><input type="checkbox" class="top" value="${i}" onchange="hitungTotalKasir()"> ${t.nama} (+Rp ${t.harga})</label><br>`).join('');hitungTotalKasir();
+}
+function jualProduk(){
+ if(keranjang.length===0){alert('Keranjang kosong');return;}
+ let metode=metodeBayar.value;
+ let total=0,nama=[];
+ keranjang.forEach(k=>{
+   total+=k.subtotal;
+   nama.push(k.nama+' x'+k.qty);
+   produk[k.index].stok-=k.qty;
+ });
+ transaksi.push({
+   tanggal:tanggalIndonesia(),bulan:new Date().getMonth(),tahun:new Date().getFullYear(),
+   produk:nama.join(', '),
+   topping:'',
+   metode:metode,
+   total:total
+ });
+ keranjang=[];
+ simpan();
+ renderKeranjang();
+ alert('Transaksi berhasil');
+}
+function tambahPengeluaran(){pengeluaran.push({tanggal:tanggalIndonesia(),bulan:new Date().getMonth(),tahun:new Date().getFullYear(),keterangan:ketPengeluaran.value,metode:metodePengeluaran.value,nominal:Number(nilaiPengeluaran.value.replace(/\D/g,''))});ketPengeluaran.value='';nilaiPengeluaran.value='';simpan();}
+function backupData(){
+const blob=new Blob([JSON.stringify({produk,transaksi,pengeluaran},null,2)],{type:'application/json'});
+const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup-pos.json';a.click();
+}
+function restoreData(){
+const file=restoreFile.files[0]; if(!file)return;
+const r=new FileReader();
+r.onload=e=>{const d=JSON.parse(e.target.result);produk=d.produk||[];transaksi=d.transaksi||[];pengeluaran=d.pengeluaran||[];simpan();alert('Restore berhasil');};
+r.readAsText(file);
+}
+function render(){
+produkList.innerHTML=produk.map((p,i)=>`<tr><td>${p.foto?'<img src="'+p.foto+'" width="60">':''}</td><td>${p.nama}</td><td>Rp ${p.harga.toLocaleString('id-ID')}</td><td>${p.stok}</td><td><button onclick="editProduk(${i})">Edit</button> <button onclick="hapusProduk(${i})">Hapus</button></td></tr>`).join('');
+window.selectedProdukIndex = window.selectedProdukIndex || 0;
+kasirProdukList.innerHTML=produk.map((p,i)=>`
+<div class="kasir-card" onclick="pilihProdukKasir(${i})">
+${p.foto?'<img src="'+p.foto+'">':''}
+<b>${p.nama}</b><br>
+Rp ${p.harga.toLocaleString('id-ID')}
+</div>`).join('');
+let fm=document.getElementById('filterMetode')?filterMetode.value:'Semua';
+let bulan=document.getElementById('filterBulan')?filterBulan.value:'';
+let tahun=document.getElementById('filterTahun')?filterTahun.value.trim():'';
+
+let transaksiFilter=transaksi.filter(t=>{
+ let okBulan=(bulan==='') || Number(t.bulan)===Number(bulan);
+ let okTahun=(tahun==='') || String(t.tahun||'')===tahun;
+ return okBulan && okTahun;
+});
+
+let pengeluaranFilter=pengeluaran.filter(t=>{
+ let okBulan=(bulan==='') || Number(t.bulan)===Number(bulan);
+ let okTahun=(tahun==='') || String(t.tahun||'')===tahun;
+ return okBulan && okTahun;
+});
+
+let dataTrans=fm==='Semua'?transaksiFilter:transaksiFilter.filter(t=>t.metode===fm);
+transaksiList.innerHTML=dataTrans.map(t=>`<tr><td>${t.tanggal}</td><td>${t.produk}</td><td>${t.topping}</td><td>${t.metode||'-'}</td><td>Rp ${t.total.toLocaleString('id-ID')}</td></tr>`).join('');
+
+let dataPengeluaran=pengeluaranFilter;
+pengeluaranList.innerHTML=dataPengeluaran.map(p=>`<tr><td>${p.tanggal}</td><td>${p.keterangan}</td><td>${p.metode||'TUNAI'}</td><td>Rp ${p.nominal.toLocaleString('id-ID')}</td></tr>`).join('');
+totalProduk.textContent=produk.length;
+let masuk=transaksiFilter.reduce((a,b)=>a+b.total,0);
+let tunai=transaksiFilter.filter(t=>t.metode==='Tunai').reduce((a,b)=>a+b.total,0);
+let qris=transaksiFilter.filter(t=>t.metode==='QRIS').reduce((a,b)=>a+b.total,0);
+let keluar=pengeluaranFilter.reduce((a,b)=>a+b.nominal,0);
+let keluarTunai=pengeluaranFilter.filter(x=>(x.metode||'TUNAI')==='TUNAI').reduce((a,b)=>a+b.nominal,0);
+let keluarQris=pengeluaranFilter.filter(x=>x.metode==='QRIS').reduce((a,b)=>a+b.nominal,0);
+totalPenjualan.textContent='Rp '+masuk.toLocaleString('id-ID');
+totalMasuk.textContent='Rp '+masuk.toLocaleString('id-ID');if(document.getElementById('totalTunai')) totalTunai.textContent='Rp '+tunai.toLocaleString('id-ID');if(document.getElementById('totalQris')) totalQris.textContent='Rp '+qris.toLocaleString('id-ID');
+if(document.getElementById('totalKeluarTunai')) totalKeluarTunai.textContent='Rp '+keluarTunai.toLocaleString('id-ID');
+if(document.getElementById('totalKeluarQris')) totalKeluarQris.textContent='Rp '+keluarQris.toLocaleString('id-ID');
+totalKeluar.textContent='Rp '+keluar.toLocaleString('id-ID');
+labaBersih.textContent='Rp '+(masuk-keluar).toLocaleString('id-ID');
+tampilkanTopping();
+}
+
+
+function editProduk(i){
+ let p=produk[i];
+ let nama=prompt('Nama Produk',p.nama); if(nama===null)return;
+ let harga=prompt('Harga',p.harga); if(harga===null)return;
+ let stok=prompt('Stok',p.stok); if(stok===null)return;
+ produk[i].nama=nama;
+ produk[i].harga=Number(String(harga).replace(/\D/g,''));
+ produk[i].stok=Number(stok);
+ simpan();
+}
+
+function tambahKeKeranjang(){
+ let p=produk[window.selectedProdukIndex||0];
+ if(!p)return;
+ let q=Number(qty.value)||1;
+ if(p.stok<q){alert('Stok tidak cukup');return;}
+ keranjang.push({
+   index:window.selectedProdukIndex,
+   nama:p.nama,
+   qty:q,
+   harga:p.harga,
+   subtotal:p.harga*q
+ });
+ renderKeranjang();
+}
+
+function renderKeranjang(){
+ let total=0;
+ keranjangList.innerHTML=keranjang.map((k,i)=>{
+   total+=k.subtotal;
+   return `<div>${k.nama} x ${k.qty} = Rp ${k.subtotal.toLocaleString('id-ID')} <button onclick="hapusKeranjang(${i})">Hapus</button></div>`;
+ }).join('');
+ grandTotal.innerHTML='Rp '+total.toLocaleString('id-ID');
+}
+
+function hapusKeranjang(i){
+ keranjang.splice(i,1);
+ renderKeranjang();
+}
+
+function resetSemuaData(){
+ if(!confirm('Yakin ingin menghapus SEMUA produk, transaksi, dan pengeluaran?')) return;
+ if(!confirm('Data yang dihapus tidak dapat dikembalikan. Lanjutkan?')) return;
+ localStorage.removeItem('produk');
+ localStorage.removeItem('transaksi');
+ localStorage.removeItem('pengeluaran');
+ produk=[]; transaksi=[]; pengeluaran=[];
+ render();
+ alert('Semua data berhasil dihapus');
+}
+
+render();
+</script>
+
+<!-- Firebase Login + Sync -->
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-import {
-getAuth,
-GoogleAuthProvider,
-signInWithPopup,
-signOut,
-onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-
-import {
-getFirestore,
-collection,
-addDoc,
-onSnapshot
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-
-import {
-getStorage,
-ref,
-uploadBytes,
-getDownloadURL
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-storage.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC5WyoFNCzQwamQBUtm-pgq0K75jGYMBAQ",
@@ -151,75 +392,51 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
 
-const produkRef = collection(db,"produk");
-
-/* LOGIN */
 window.loginGoogle = async function(){
-const provider = new GoogleAuthProvider();
-await signInWithPopup(auth,provider);
+  const provider = new GoogleAuthProvider();
+  await signInWithPopup(auth, provider);
+  alert("Login Google berhasil");
 }
 
-/* LOGOUT */
-window.logout = function(){
-signOut(auth);
+window.logoutGoogle = async function(){
+  await signOut(auth);
+  alert("Logout berhasil");
 }
+</script>
 
-/* CEK LOGIN */
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+
+const firebaseConfig = {
+ apiKey: "AIzaSyC5WyoFNCzQwamQBUtm-pgq0K75jGYMBAQ",
+ authDomain: "shaf-design.firebaseapp.com",
+ projectId: "shaf-design",
+ storageBucket: "shaf-design.firebasestorage.app",
+ messagingSenderId: "592703493315",
+ appId: "1:592703493315:web:7894c17e5b1bb2ba0d3e76",
+ measurementId: "G-1SKQT0B5DT"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+window.loginGoogle = async ()=>{
+ const provider = new GoogleAuthProvider();
+ await signInWithPopup(auth, provider);
+};
+
+window.logoutGoogle = async ()=>{
+ await signOut(auth);
+};
+
 onAuthStateChanged(auth,(user)=>{
-if(user){
-document.getElementById("landing").style.display="none";
-document.getElementById("app").style.display="block";
-loadProduk();
-}else{
-document.getElementById("landing").style.display="flex";
-document.getElementById("app").style.display="none";
-}
+ const el=document.getElementById('loginStatus');
+ if(!el) return;
+ el.innerHTML = user ? ('Login: '+(user.displayName||user.email)) : 'Belum Login';
 });
-
-/* TAMBAH PRODUK */
-window.tambahProduk = async function(){
-
-let nama=document.getElementById("nama").value;
-let harga=document.getElementById("harga").value;
-let file=document.getElementById("foto").files[0];
-
-let url="";
-
-if(file){
-let r=ref(storage,"produk/"+file.name);
-await uploadBytes(r,file);
-url=await getDownloadURL(r);
-}
-
-await addDoc(produkRef,{
-nama,
-harga:Number(harga),
-foto:url,
-time:Date.now()
-});
-}
-
-/* REALTIME */
-function loadProduk(){
-onSnapshot(produkRef,(snap)=>{
-let html="";
-snap.forEach(d=>{
-let x=d.data();
-html+=`
-<div class="product">
-<img src="${x.foto}">
-<h4>${x.nama}</h4>
-<p>Rp ${x.harga}</p>
-</div>
-`;
-});
-document.getElementById("list").innerHTML=html;
-});
-}
-
 </script>
 
 </body>
