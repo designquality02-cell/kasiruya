@@ -275,7 +275,7 @@ r.onload=e=>{const d=JSON.parse(e.target.result);produk=d.produk||[];transaksi=d
 r.readAsText(file);
 }
 function render(){
-produkList.innerHTML=produk.map((p,i)=>`<tr><td>${p.foto?'<img src="'+p.foto+'" width="60">':''}</td><td>${p.nama}</td><td>Rp ${p.harga.toLocaleString('id-ID')}</td><td>${p.stok}</td><td><button onclick="editProduk(${i})">Edit</button> <button onclick="hapusProduk(${i})">Hapus</button></td></tr>`).join('');
+produkList.innerHTML=produk.map((p,i)=>`<tr><td>${p.foto?'<img src="'+p.foto+'" width="60">':''}</td><td>${p.nama}</td><td>Rp ${p.harga.toLocaleString('id-ID')}</td><td>${p.stok}</td><td><button onclick="editHargaStok(${i})">Edit Harga/Stok</button> <button onclick="hapusProduk(${i})">Hapus</button></td></tr>`).join('');
 window.selectedProdukIndex = window.selectedProdukIndex || 0;
 kasirProdukList.innerHTML=produk.map((p,i)=>`
 <div class="kasir-card" onclick="pilihProdukKasir(${i})">
@@ -331,6 +331,26 @@ function editProduk(i){
  produk[i].stok=Number(stok);
  simpan();
 }
+
+
+function editHargaStok(i){
+
+ let p = produk[i];
+
+ let hargaBaru = prompt('Masukkan Harga Baru', p.harga);
+ if(hargaBaru===null) return;
+
+ let stokBaru = prompt('Masukkan Stok Baru', p.stok);
+ if(stokBaru===null) return;
+
+ produk[i].harga = Number(String(hargaBaru).replace(/\D/g,''));
+ produk[i].stok = Number(stokBaru);
+
+ simpan();
+
+ alert('Harga dan stok berhasil diperbarui');
+}
+
 
 function tambahKeKeranjang(){
  let p=produk[window.selectedProdukIndex||0];
