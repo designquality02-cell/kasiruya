@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shaf POS Firebase</title>
+
+<style>
+body{
+margin:0;
+font-family:Arial;
+background:linear-gradient(135deg,#6a5af9,#8ec5ff);
+color:white;
+}
+
+/* LANDING */
+#landing{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+text-align:center;
+}
+
+.card{
+background:white;
+color:black;
+padding:30px;
+border-radius:20px;
+width:320px;
+box-shadow:0 10px 30px rgba(0,0,0,0.2);
+}
+
+button{
+padding:12px 20px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+background:#6a5af9;
+color:white;
+font-size:16px;
+width:100%;
+}
+
+/* APP */
+#app{
+display:none;
+background:#f4f6ff;
+color:black;
+min-height:100vh;
+}
+
+.sidebar{
+width:220px;
+background:white;
+height:100vh;
+position:fixed;
+padding:15px;
+}
+
+.content{
+margin-left:230px;
+padding:15px;
+}
+
+.product{
+background:white;
+padding:10px;
+border-radius:10px;
+margin:10px;
+}
+img{width:100%;border-radius:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+
+</style>
+</head>
+
+<body>
+
+<!-- LANDING PAGE -->
+<div id="landing">
+<h1>Shaf POS System</h1>
+<p>Kelola produk, kasir, dan laporan secara online</p>
+
+<div class="card">
+<h3>Login ke Sistem</h3>
+<button onclick="loginGoogle()">Login dengan Google</button>
+</div>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+<div class="sidebar">
+<h3>Dashboard POS</h3>
+<button onclick="logout()">Logout</button>
+</div>
+
+<div class="content">
+
+<h2>Tambah Produk</h2>
+
+<input id="nama" placeholder="Nama"><br><br>
+<input id="harga" placeholder="Harga"><br><br>
+<input id="foto" type="file"><br><br>
+
+<button onclick="tambahProduk()">Simpan</button>
+
+<hr>
+
+<div class="grid" id="list"></div>
+
+</div>
+</div>
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+import {
+getAuth,
+GoogleAuthProvider,
+signInWithPopup,
+signOut,
+onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+import {
+getFirestore,
+collection,
+addDoc,
+onSnapshot
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+import {
+getStorage,
+ref,
+uploadBytes,
+getDownloadURL
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-storage.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC5WyoFNCzQwamQBUtm-pgq0K75jGYMBAQ",
+  authDomain: "shaf-design.firebaseapp.com",
+  projectId: "shaf-design",
+  storageBucket: "shaf-design.firebasestorage.app",
+  messagingSenderId: "592703493315",
+  appId: "1:592703493315:web:7894c17e5b1bb2ba0d3e76",
+  measurementId: "G-1SKQT0B5DT"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+const produkRef = collection(db,"produk");
+
+/* LOGIN */
+window.loginGoogle = async function(){
+const provider = new GoogleAuthProvider();
+await signInWithPopup(auth,provider);
+}
+
+/* LOGOUT */
+window.logout = function(){
+signOut(auth);
+}
+
+/* CEK LOGIN */
+onAuthStateChanged(auth,(user)=>{
+if(user){
+document.getElementById("landing").style.display="none";
+document.getElementById("app").style.display="block";
+loadProduk();
+}else{
+document.getElementById("landing").style.display="flex";
+document.getElementById("app").style.display="none";
+}
+});
+
+/* TAMBAH PRODUK */
+window.tambahProduk = async function(){
+
+let nama=document.getElementById("nama").value;
+let harga=document.getElementById("harga").value;
+let file=document.getElementById("foto").files[0];
+
+let url="";
+
+if(file){
+let r=ref(storage,"produk/"+file.name);
+await uploadBytes(r,file);
+url=await getDownloadURL(r);
+}
+
+await addDoc(produkRef,{
+nama,
+harga:Number(harga),
+foto:url,
+time:Date.now()
+});
+}
+
+/* REALTIME */
+function loadProduk(){
+onSnapshot(produkRef,(snap)=>{
+let html="";
+snap.forEach(d=>{
+let x=d.data();
+html+=`
+<div class="product">
+<img src="${x.foto}">
+<h4>${x.nama}</h4>
+<p>Rp ${x.harga}</p>
+</div>
+`;
+});
+document.getElementById("list").innerHTML=html;
+});
+}
+
+</script>
+
+</body>
+</html>
